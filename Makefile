@@ -16,6 +16,7 @@ export ZEPHYR_SDK_INSTALL_DIR := $(WS)/.tools/zephyr-sdk-1.0.1
 # APP is a short name from this list, or a path to any Zephyr application.
 APP_PATH_blinky := $(REPO)/apps/blinky
 APP_PATH_wifi_ble := $(REPO)/apps/wifi_ble
+APP_PATH_wireless_uart := $(REPO)/apps/wireless_uart
 APP_PATH_wifi   := $(ZEPHYR_BASE)/samples/net/wifi/shell
 APP_PATH_ble    := $(ZEPHYR_BASE)/samples/bluetooth/peripheral
 
@@ -31,7 +32,7 @@ help:
 	@echo "  make setup                          Install Python, west, Zephyr, toolchain"
 	@echo "  make blobs                          Fetch the RW61x Wi-Fi and BLE firmware"
 	@echo
-	@echo "Daily use (APP=blinky|wifi_ble|wifi|ble|<path>, default blinky):"
+	@echo "Daily use (APP=blinky|wifi_ble|wireless_uart|wifi|ble|<path>, default blinky):"
 	@echo "  make build APP=wifi                 Build an application"
 	@echo "  make flash APP=wifi                 Build and flash [RUNNER=jlink|linkserver]"
 	@echo "  make monitor                        Open the serial console [PORT=$(PORT)]"
@@ -52,6 +53,7 @@ build:
 build-all:
 	$(MAKE) build APP=blinky
 	$(MAKE) build APP=wifi_ble
+	$(MAKE) build APP=wireless_uart
 	$(MAKE) build APP=wifi
 	$(MAKE) build APP=ble
 

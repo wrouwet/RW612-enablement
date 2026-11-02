@@ -1,0 +1,6 @@
+/* Selects the UART bridged to BLE. flexcomm3 is the USB serial port on J10. */
+/ {
+	chosen {
+		app,bridge-uart = &flexcomm3;
+	};
+};

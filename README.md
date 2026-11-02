@@ -41,6 +41,7 @@ make clean
 |---|---|---|
 | `blinky` | `apps/blinky` | Blinks the green LED and logs each change to the console |
 | `wifi_ble` | `apps/wifi_ble` | Wi-Fi shell and BLE together. A BLE characteristic reports the Wi-Fi status |
+| `wireless_uart` | `apps/wireless_uart` | Bridges a UART to BLE for the Wireless UART screen of NXP's IoT Toolbox app |
 | `wifi` | Zephyr `samples/net/wifi/shell` | Wi-Fi shell |
 | `ble` | Zephyr `samples/bluetooth/peripheral` | BLE peripheral |
 
@@ -56,6 +57,31 @@ The `wifi_ble` app advertises as `RW612 WiFi+BLE`. Its status characteristic
 (`52573631-3200-4000-8000-525736313201`) can be read and subscribed to, and reports
 `disconnected`, `associated`, `connected <ip>` or `connect failed`. Pairing isn't
 required, so any nearby BLE device can read the status, including the IP address.
+
+## Wireless UART
+
+`apps/wireless_uart` implements NXP's Wireless UART profile, so the IoT Toolbox phone
+app can exchange data with a UART on the board. The bridge uses the USB serial port on
+J10 by default, and it also prints status messages there, such as `Connected`.
+
+```bash
+make flash APP=wireless_uart
+make monitor
+```
+
+In IoT Toolbox, open Wireless UART and connect to `NXP_WU`.
+
+To bridge a different UART, change `app,bridge-uart` in
+`apps/wireless_uart/boards/frdm_rw612.overlay`.
+
+Limitations:
+
+- **No flow control:** there are 4 KB buffers in each direction. Data beyond that is
+  lost, which can happen when the phone sends long bursts faster than the UART's
+  115200 baud.
+- **No pairing:** any nearby BLE device can connect and read or write the UART, so
+  don't bridge anything sensitive.
+- **One connection:** only one phone can connect at a time.
 
 ## Flashing
 
