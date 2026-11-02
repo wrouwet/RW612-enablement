@@ -1,0 +1,25 @@
+# Pins Zephyr and fetches only the modules this board and its radios need.
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v4.5.0
+      import:
+        name-allowlist:
+          - cmsis
+          - cmsis_6
+          - hal_nxp
+          - hostap
+          - littlefs
+          - mbedtls
+          - mcuboot
+          - picolibc
+          - segger
+          - tf-psa-crypto
+          - tf-psa-crypto-drivers
+          - zcbor
+  self:
+    path: RW612-enablement
