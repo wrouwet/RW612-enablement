@@ -9,7 +9,7 @@ APP    ?= blinky
 PORT   ?= /dev/ttyACM0
 RUNNER ?=
 
-export PATH := $(WS)/.venv/bin:$(PATH)
+export PATH := $(WS)/.venv/bin:$(WS)/.tools/JLink:$(PATH)
 export ZEPHYR_BASE := $(WS)/zephyr
 export ZEPHYR_SDK_INSTALL_DIR := $(WS)/.tools/zephyr-sdk-1.0.1
 

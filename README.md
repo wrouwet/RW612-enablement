@@ -46,9 +46,19 @@ Build output goes to `build/<app>/`.
 
 ## Flashing
 
-Flashing needs a host tool that matches the firmware on the board's MCU-Link debug
-probe: SEGGER J-Link or NXP LinkServer. Neither is installed by `make setup`, as
-each has its own license terms.
+The FRDM-RW612's MCU-Link debug probe ships with SEGGER J-Link firmware, so flashing
+needs the J-Link software. `make setup` doesn't install it because you have to accept
+SEGGER's license yourself:
+
+1. Download the Linux x86_64 `.tgz` from <https://www.segger.com/downloads/jlink/>.
+2. Extract it into the workspace (tested with V9.90):
+
+   ```bash
+   mkdir -p ../.tools/JLink
+   tar -xzf JLink_Linux_x86_64.tgz -C ../.tools/JLink --strip-components=1
+   ```
+
+3. Connect USB to J10, then run `make flash`.
 
 ## Notes
 
