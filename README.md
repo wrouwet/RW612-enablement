@@ -31,6 +31,7 @@ Only `install-host-deps.sh` needs sudo. Everything else stays inside the workspa
 make build APP=wifi     # APP is blinky (default), wifi, ble or a path to an application
 make flash APP=wifi     # add RUNNER=jlink or RUNNER=linkserver to choose the flash tool
 make monitor            # serial console at 115200 baud, PORT=/dev/ttyACM0 by default
+make wifi-test          # flash wifi_ble, join a network, then test ping and TCP
 make menuconfig APP=wifi
 make build-all
 make clean
@@ -39,10 +40,22 @@ make clean
 | APP | Source | What it does |
 |---|---|---|
 | `blinky` | `apps/blinky` | Blinks the green LED and logs each change to the console |
+| `wifi_ble` | `apps/wifi_ble` | Wi-Fi shell and BLE together. A BLE characteristic reports the Wi-Fi status |
 | `wifi` | Zephyr `samples/net/wifi/shell` | Wi-Fi shell |
 | `ble` | Zephyr `samples/bluetooth/peripheral` | BLE peripheral |
 
 Build output goes to `build/<app>/`.
+
+## Testing Wi-Fi
+
+`make wifi-test` prompts for the network name, security type and password, then
+checks association, DHCP, ping and TCP. The password stays out of the log, which is
+written to `build/wifi-test.log`. The board stays connected afterwards.
+
+The `wifi_ble` app advertises as `RW612 WiFi+BLE`. Its status characteristic
+(`52573631-3200-4000-8000-525736313201`) can be read and subscribed to, and reports
+`disconnected`, `associated`, `connected <ip>` or `connect failed`. Pairing isn't
+required, so any nearby BLE device can read the status, including the IP address.
 
 ## Flashing
 

@@ -15,6 +15,7 @@ export ZEPHYR_SDK_INSTALL_DIR := $(WS)/.tools/zephyr-sdk-1.0.1
 
 # APP is a short name from this list, or a path to any Zephyr application.
 APP_PATH_blinky := $(REPO)/apps/blinky
+APP_PATH_wifi_ble := $(REPO)/apps/wifi_ble
 APP_PATH_wifi   := $(ZEPHYR_BASE)/samples/net/wifi/shell
 APP_PATH_ble    := $(ZEPHYR_BASE)/samples/bluetooth/peripheral
 
@@ -22,7 +23,7 @@ APP_PATH  := $(or $(APP_PATH_$(APP)),$(abspath $(APP)))
 BUILD_DIR := $(REPO)/build/$(notdir $(APP))
 
 .DEFAULT_GOAL := help
-.PHONY: help setup blobs build build-all flash monitor menuconfig clean
+.PHONY: help setup blobs build build-all flash monitor wifi-test menuconfig clean
 
 help:
 	@echo "First-time setup:"
@@ -30,12 +31,13 @@ help:
 	@echo "  make setup                          Install Python, west, Zephyr, toolchain"
 	@echo "  make blobs                          Fetch the RW61x Wi-Fi and BLE firmware"
 	@echo
-	@echo "Daily use (APP=blinky|wifi|ble|<path>, default blinky):"
+	@echo "Daily use (APP=blinky|wifi_ble|wifi|ble|<path>, default blinky):"
 	@echo "  make build APP=wifi                 Build an application"
 	@echo "  make flash APP=wifi                 Build and flash [RUNNER=jlink|linkserver]"
 	@echo "  make monitor                        Open the serial console [PORT=$(PORT)]"
+	@echo "  make wifi-test                      Flash wifi_ble, join a network, ping"
 	@echo "  make menuconfig APP=wifi            Edit the Kconfig for a build"
-	@echo "  make build-all                      Build blinky, wifi and ble"
+	@echo "  make build-all                      Build every named application"
 	@echo "  make clean                          Delete all build output"
 
 setup:
@@ -49,6 +51,7 @@ build:
 
 build-all:
 	$(MAKE) build APP=blinky
+	$(MAKE) build APP=wifi_ble
 	$(MAKE) build APP=wifi
 	$(MAKE) build APP=ble
 
@@ -57,6 +60,12 @@ flash: build
 
 monitor:
 	picocom -b 115200 $(PORT)
+
+wifi-test:
+	$(MAKE) flash APP=wifi_ble
+	mkdir -p $(REPO)/build
+	sleep 5
+	python3 $(REPO)/scripts/wifi_test.py --port $(PORT) --log $(REPO)/build/wifi-test.log
 
 menuconfig:
 	cd $(WS) && west build -d $(BUILD_DIR) -t menuconfig
