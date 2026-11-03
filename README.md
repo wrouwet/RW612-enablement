@@ -14,7 +14,7 @@ NXP FRDM-RW612 board (Zephyr board name `frdm_rw612`), with Wi-Fi and BLE.
 The main way to use the board is the Zephyr console on a phone over BLE, using the
 Wireless UART screen of NXP's IoT Toolbox app. See
 [Zephyr console on a phone](#zephyr-console-on-a-phone). This has been bench tested on
-one board and one Android phone only.
+one board and one phone only.
 
 | Feature | App | Tested on hardware |
 |---|---|---|
