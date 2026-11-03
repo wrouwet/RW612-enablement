@@ -40,7 +40,9 @@ west update --narrow --fetch-opt=--depth=1
 "$TOOLS/uv/uv" pip install --python "$VENV/bin/python" -r zephyr/scripts/requirements.txt
 
 if [ ! -d "$TOOLS/zephyr-sdk-$SDK_VERSION" ]; then
-    west sdk install --version "$SDK_VERSION" --install-base "$TOOLS" --toolchains arm-zephyr-eabi
+    # The installer looks for existing SDKs in a registry under $HOME and skips the
+    # install if it finds one, so give it a private $HOME inside the workspace.
+    HOME=$TOOLS west sdk install --version "$SDK_VERSION" --install-base "$TOOLS" --toolchains arm-zephyr-eabi
 fi
 
 echo "Bootstrap complete. Next: make blobs"
