@@ -3,8 +3,8 @@
 ## What has been tested
 
 All testing so far is manual, on one board. There are no automated tests. Commands were
-sent from a serial terminal in VS Code on Windows, through a USB-to-BLE UART bridge on an
-NXP FRDM-MCXW23 board. Output was also received on one phone with NXP's IoT Toolbox app.
+sent from a serial terminal in VS Code on Windows, through an NXP FRDM-MCXW23 board running
+NXP's `w_uart` example as a USB-to-BLE UART bridge. Output was also received on one phone with NXP's IoT Toolbox app.
 
 | Feature | App | Tested on hardware |
 |---|---|---|

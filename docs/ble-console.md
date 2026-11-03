@@ -7,10 +7,13 @@ profile. It's the default application, so `make flash` installs it.
 
 | Client | Output from the board | Sending commands |
 |---|---|---|
-| USB-to-BLE UART bridge on an NXP FRDM-MCXW23 board, used from a serial terminal in VS Code on Windows | Tested | Tested |
+| NXP FRDM-MCXW23 board running NXP's `w_uart` example, used from a serial terminal in VS Code on Windows | Tested | Tested |
 | NXP IoT Toolbox on a phone, Wireless UART screen | Tested | Not working: we never found a way to type in the app |
 
-With the bridge, the terminal only sees a serial port, and the bridge board handles BLE.
+With the FRDM-MCXW23, the terminal only sees a serial port, and that board handles BLE. It
+runs NXP's
+[Wireless UART example](https://github.com/nxp-mcuxpresso/mcuxsdk-middleware-bluetooth-host/tree/main/examples/w_uart)
+from the MCUXpresso SDK, which implements both sides of the profile.
 
 A client has to offer the Wireless UART service itself, not just connect to the board's,
 because the board writes its output to the client's characteristic. See
