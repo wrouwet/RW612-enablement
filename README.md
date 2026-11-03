@@ -20,7 +20,7 @@ one board and one phone only.
 |---|---|---|
 | Console commands from the phone, with replies | `ble_shell` | Yes |
 | Join a Wi-Fi network from the phone and get an IP address (WPA3, 5 GHz) | `ble_shell` | Yes |
-| Wi-Fi status every 30 seconds while connected | `ble_shell` | Yes, about 4 minutes |
+| Wi-Fi status every 30 seconds while connected | `ble_shell` | Yes, about 7 minutes |
 | Ping and TCP over Wi-Fi (WPA3, 5 GHz) | `wifi_ble` | Yes, not yet in `ble_shell` |
 | Wi-Fi and BLE active together | `wifi_ble`, `ble_shell` | Yes, for minutes rather than hours |
 | UART bridge to the phone, both directions | `wireless_uart` | Yes, short messages. A 2 KB transfer was tested from a Linux laptop only |
@@ -35,9 +35,6 @@ one board and one phone only.
 - **Occasional BLE drops:** the link can still time out (reason `0x08`) with a single
   phone connected, even with a 4 second timeout. The phone can reconnect. The cause is
   unknown.
-- **Console stalls around a BLE drop:** log lines were cut off on J10 and the status
-  messages paused while the link was failing. The likely cause, not yet confirmed, is
-  that the log output waits on a BLE link that has stopped moving.
 - **Errors while joining Wi-Fi:** `[wlcm] Error: error: scan failed` and repeated
   `board_type` lines appeared around one connection attempt, and the board still joined
   the network afterwards. The cause is unknown.
