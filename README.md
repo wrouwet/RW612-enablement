@@ -9,6 +9,44 @@ NXP FRDM-RW612 board (Zephyr board name `frdm_rw612`), with Wi-Fi and BLE.
 | Zephyr SDK | 1.0.1, `arm-zephyr-eabi` toolchain only |
 | Python | 3.12, installed locally by `uv` |
 
+## Status
+
+The main way to use the board is the Zephyr console on a phone over BLE, using the
+Wireless UART screen of NXP's IoT Toolbox app. See
+[Zephyr console on a phone](#zephyr-console-on-a-phone). This has been bench tested on
+one board and one Android phone only.
+
+| Feature | App | Tested on hardware |
+|---|---|---|
+| Console commands from the phone, with replies | `ble_shell` | Yes |
+| Join a Wi-Fi network from the phone and get an IP address (WPA3, 5 GHz) | `ble_shell` | Yes |
+| Wi-Fi status every 30 seconds while connected | `ble_shell` | Yes, about 4 minutes |
+| Ping and TCP over Wi-Fi (WPA3, 5 GHz) | `wifi_ble` | Yes, not yet in `ble_shell` |
+| Wi-Fi and BLE active together | `wifi_ble`, `ble_shell` | Yes, for minutes rather than hours |
+| UART bridge to the phone, both directions | `wireless_uart` | Yes, short messages. A 2 KB transfer was tested from a Linux laptop only |
+| Traffic on 2.4 GHz with WPA2 | | Not verified, see known issues |
+| Long-term stability, throughput and range | | Not tested |
+
+### Known issues
+
+- **Competing connections:** the board allows one BLE connection. A second machine
+  connecting at the same time makes the link drop repeatedly, so disconnect other
+  devices first.
+- **Occasional BLE drops:** the link can still time out (reason `0x08`) with a single
+  phone connected, even with a 4 second timeout. The phone can reconnect. The cause is
+  unknown.
+- **Console stalls around a BLE drop:** log lines were cut off on J10 and the status
+  messages paused while the link was failing. The likely cause, not yet confirmed, is
+  that the log output waits on a BLE link that has stopped moving.
+- **Errors while joining Wi-Fi:** `[wlcm] Error: error: scan failed` and repeated
+  `board_type` lines appeared around one connection attempt, and the board still joined
+  the network afterwards. The cause is unknown.
+- **No traffic on one network:** on a WPA2, 2.4 GHz network, the board joined and got an
+  IP address, but all ping and TCP attempts failed. Network filtering is the most likely
+  cause, but a board problem on that band or security type isn't ruled out.
+- **Missing boot logs on the phone:** anything logged before the phone connects only
+  appears on J10.
+
 ## Setup
 
 Tested on Ubuntu 26.04 x86_64. Clone into an empty directory, because the Zephyr
@@ -111,6 +149,14 @@ only place to see those from before the phone connects.
 **Security:** this app has no pairing or encryption, on purpose, for bench use. Any
 nearby BLE device can connect and run shell commands, and Wi-Fi passwords typed on the
 phone cross the air unencrypted. Add pairing before using it outside a test setup.
+
+The board's Wi-Fi status messages look like this:
+
+```
+Wi-Fi: not connected (DISCONNECTED)
+Wi-Fi: joined network, waiting for an IP address
+Wi-Fi: connected to <SSID>, 5GHz channel 161, RSSI -35 dBm, IP <address>
+```
 
 ## Flashing
 
