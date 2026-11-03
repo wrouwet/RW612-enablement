@@ -3,51 +3,24 @@
 Makefile-based [Zephyr](https://zephyrproject.org/) development environment for the
 NXP FRDM-RW612 board (Zephyr board name `frdm_rw612`), with Wi-Fi and BLE.
 
+The main way to use the board is a **Zephyr console over BLE**. From a serial terminal
+on another computer, through a USB-to-BLE UART bridge, you can run shell commands, join
+Wi-Fi networks and watch the logs and Wi-Fi status, with no cable to the RW612's console.
+
 | Component | Version |
 |---|---|
-| Zephyr | v4.5.0 (pinned in `west.yml`) |
+| Zephyr | v4.5.0, pinned in `west.yml` |
 | Zephyr SDK | 1.0.1, `arm-zephyr-eabi` toolchain only |
 | Python | 3.12, installed locally by `uv` |
+| SEGGER J-Link | Tested with V9.90, installed manually |
 
-## Status
+This is a bench project, tested on one board. The console has no pairing or encryption, so read the [security note](docs/ble-console.md#security) before using it anywhere but a
+test setup.
 
-The main way to use the board is the Zephyr console on a phone over BLE, using the
-Wireless UART screen of NXP's IoT Toolbox app. See
-[Zephyr console on a phone](#zephyr-console-on-a-phone). This has been bench tested on
-one board and one phone only.
-
-| Feature | App | Tested on hardware |
-|---|---|---|
-| Console commands from the phone, with replies | `ble_shell` | Yes |
-| Join a Wi-Fi network from the phone and get an IP address (WPA3, 5 GHz) | `ble_shell` | Yes |
-| Wi-Fi status every 30 seconds while connected | `ble_shell` | Yes, about 7 minutes |
-| Ping and TCP over Wi-Fi (WPA3, 5 GHz) | `wifi_ble` | Yes, not yet in `ble_shell` |
-| Wi-Fi and BLE active together | `wifi_ble`, `ble_shell` | Yes, for minutes rather than hours |
-| UART bridge to the phone, both directions | `wireless_uart` | Yes, short messages. A 2 KB transfer was tested from a Linux laptop only |
-| Traffic on 2.4 GHz with WPA2 | | Not verified, see known issues |
-| Long-term stability, throughput and range | | Not tested |
-
-### Known issues
-
-- **Competing connections:** the board allows one BLE connection. A second machine
-  connecting at the same time makes the link drop repeatedly, so disconnect other
-  devices first.
-- **Occasional BLE drops:** the link can still time out (reason `0x08`) with a single
-  phone connected, even with a 4 second timeout. The phone can reconnect. The cause is
-  unknown.
-- **Errors while joining Wi-Fi:** `[wlcm] Error: error: scan failed` and repeated
-  `board_type` lines appeared around one connection attempt, and the board still joined
-  the network afterwards. The cause is unknown.
-- **No traffic on one network:** on a WPA2, 2.4 GHz network, the board joined and got an
-  IP address, but all ping and TCP attempts failed. Network filtering is the most likely
-  cause, but a board problem on that band or security type isn't ruled out.
-- **Missing boot logs on the phone:** anything logged before the phone connects only
-  appears on J10.
-
-## Setup
+## Quick start
 
 Tested on Ubuntu 26.04 x86_64. Clone into an empty directory, because the Zephyr
-workspace (about 4.5 GB) is created next to this repo:
+workspace is created next to this repo:
 
 ```bash
 mkdir rw612-workspace && cd rw612-workspace
@@ -58,125 +31,77 @@ make setup
 make blobs
 ```
 
-Only `install-host-deps.sh` needs sudo. Everything else stays inside the workspace.
+Only `install-host-deps.sh` needs sudo. Everything else installs inside the workspace,
+which takes about 4.5 GB before you build anything. Builds also keep a small cache in
+`~/.cache/zephyr`.
 
-## Usage
-
-```bash
-make build APP=wifi     # APP is ble_shell (default), blinky, wifi_ble, wireless_uart, wifi, ble or a path to an application
-make flash APP=wifi     # add RUNNER=jlink or RUNNER=linkserver to choose the flash tool
-make monitor            # serial console at 115200 baud, PORT=/dev/ttyACM0 by default
-make wifi-test          # flash wifi_ble, join a network, then test ping and TCP
-make menuconfig APP=wifi
-make build-all
-make clean
-```
-
-| APP | Source | What it does |
-|---|---|---|
-| `blinky` | `apps/blinky` | Blinks the green LED and logs each change to the console |
-| `wifi_ble` | `apps/wifi_ble` | Wi-Fi shell and BLE together. A BLE characteristic reports the Wi-Fi status |
-| `wireless_uart` | `apps/wireless_uart` | Bridges a UART to BLE for the Wireless UART screen of NXP's IoT Toolbox app |
-| `ble_shell` | `apps/ble_shell` | Zephyr console on a phone over BLE, with Wi-Fi commands and logs |
-| `wifi` | Zephyr `samples/net/wifi/shell` | Wi-Fi shell |
-| `ble` | Zephyr `samples/bluetooth/peripheral` | BLE peripheral |
-
-Build output goes to `build/<app>/`.
-
-## Testing Wi-Fi
-
-`make wifi-test` prompts for the network name, security type and password, then
-checks association, DHCP, ping and TCP. The password stays out of the log, which is
-written to `build/wifi-test.log`. The board stays connected afterwards.
-
-The `wifi_ble` app advertises as `RW612 WiFi+BLE`. Its status characteristic
-(`52573631-3200-4000-8000-525736313201`) can be read and subscribed to, and reports
-`disconnected`, `associated`, `connected <ip>` or `connect failed`. Pairing isn't
-required, so any nearby BLE device can read the status, including the IP address.
-
-## Wireless UART
-
-`apps/wireless_uart` implements NXP's Wireless UART profile, so the IoT Toolbox phone
-app can exchange data with a UART on the board. The bridge uses the USB serial port on
-J10 by default, and it also prints status messages there, such as `Connected`.
-
-```bash
-make flash APP=wireless_uart
-make monitor
-```
-
-In IoT Toolbox, open Wireless UART and connect to `NXP_WU`.
-
-To bridge a different UART, change `app,bridge-uart` in
-`apps/wireless_uart/boards/frdm_rw612.overlay`.
-
-Limitations:
-
-- **No flow control:** there are 4 KB buffers in each direction. Data beyond that is
-  lost, which can happen when the phone sends long bursts faster than the UART's
-  115200 baud.
-- **No pairing:** any nearby BLE device can connect and read or write the UART, so
-  don't bridge anything sensitive.
-- **One connection:** only one phone can connect at a time.
-
-## Zephyr console on a phone
-
-`apps/ble_shell` is the default application and the board's main console. It runs the
-Zephyr shell and log output over the same Wireless UART profile, with Wi-Fi and BLE in
-one image. It greets you when you connect, reports the Wi-Fi status every 30 seconds,
-and reports changes as they happen.
-
-```bash
-make flash APP=ble_shell
-```
-
-In IoT Toolbox, open Wireless UART, connect to `NXP_WU`, and type commands such as
-`help`, `wifi scan` or `net iface`. To join a network:
-
-```
-wifi connect -s <SSID> -k 1 -p <password>
-```
-
-The board allows one BLE connection at a time, so close the connection on any other
-device first, or they will compete for it and the link will keep dropping.
-
-Use `-k 3` for WPA3 and `-k 0` for an open network. Logs also go to J10, which is the
-only place to see those from before the phone connects.
-
-**Security:** this app has no pairing or encryption, on purpose, for bench use. Any
-nearby BLE device can connect and run shell commands, and Wi-Fi passwords typed on the
-phone cross the air unencrypted. Add pairing before using it outside a test setup.
-
-The board's Wi-Fi status messages look like this:
-
-```
-Wi-Fi: not connected (DISCONNECTED)
-Wi-Fi: joined network, waiting for an IP address
-Wi-Fi: connected to <SSID>, 5GHz channel 161, RSSI -35 dBm, IP <address>
-```
-
-## Flashing
-
-The FRDM-RW612's MCU-Link debug probe ships with SEGGER J-Link firmware, so flashing
-needs the J-Link software. `make setup` doesn't install it because you have to accept
-SEGGER's license yourself:
+To flash the board, you also need the J-Link software, which `make setup` doesn't
+install because you have to accept SEGGER's license yourself:
 
 1. Download the Linux x86_64 `.tgz` from <https://www.segger.com/downloads/jlink/>.
-2. Extract it into the workspace (tested with V9.90):
+2. Extract it into the workspace:
 
    ```bash
    mkdir -p ../.tools/JLink
    tar -xzf JLink_Linux_x86_64.tgz -C ../.tools/JLink --strip-components=1
    ```
 
-3. Connect USB to J10, then run `make flash`.
+Then connect a USB cable to J10 and flash the default app:
 
-## Notes
+```bash
+make flash
+```
 
-- **Radio firmware:** `make blobs` downloads NXP's RW61x firmware, which is covered
-  by the NXP software license in
-  `modules/hal/nxp/zephyr/blobs/license/LA_OPT_NXP_Software_License.txt`. The blobs
-  are not stored in this repo. The build links them into the application image.
-- **Wi-Fi sample security:** Zephyr's Wi-Fi shell sample sets
-  `CONFIG_TEST_RANDOM_GENERATOR=y`, which is not secure. Don't use its configuration
-  in production.
+Then connect to `NXP_WU` from a Wireless UART client. See [BLE console](docs/ble-console.md) for
+which clients work and what to do next.
+
+## Commands
+
+`APP` selects the application, and defaults to `ble_shell`.
+
+| Command | What it does |
+|---|---|
+| `make build APP=<app>` | Build an application |
+| `make flash APP=<app>` | Build and flash it. `RUNNER=jlink` selects the flash tool explicitly |
+| `make monitor` | Open the J10 serial port at 115200 baud. Exit with Ctrl-A then Ctrl-X. `PORT=` overrides `/dev/ttyACM0` |
+| `make wifi-test` | Flash `wifi_ble`, join a network, then test ping and TCP. See [Testing](docs/testing.md#wi-fi-connection-test) |
+| `make menuconfig APP=<app>` | Edit the Kconfig for an existing build |
+| `make build-all` | Build every named application |
+| `make clean` | Delete all build output |
+
+## Applications
+
+| `APP` | Source | What it does |
+|---|---|---|
+| `ble_shell` | `apps/ble_shell` | **Default.** Zephyr console over BLE, with Wi-Fi commands, logs and status messages |
+| `wireless_uart` | `apps/wireless_uart` | Bridges the J10 UART to a BLE client. BLE only |
+| `wifi_ble` | `apps/wifi_ble` | Wi-Fi shell on J10, plus a BLE characteristic reporting the Wi-Fi status |
+| `blinky` | `apps/blinky` | Blinks the green LED and logs each change to J10 |
+| `wifi` | Zephyr `samples/net/wifi/shell` | Upstream Wi-Fi shell sample |
+| `ble` | Zephyr `samples/bluetooth/peripheral` | Upstream BLE peripheral sample |
+
+`APP` can also be a path to any Zephyr application. Build output goes to `build/<app>/`.
+
+## Documentation
+
+- [BLE console](docs/ble-console.md): using the board over BLE
+- [Architecture](docs/architecture.md): how the repo and the BLE console work, and how
+  to add an application
+- [Testing](docs/testing.md): what has been tested, known issues, and how to retest
+- [Troubleshooting](docs/troubleshooting.md): problems we've hit and how to fix them
+
+## Third-party firmware and tools
+
+- **Radio firmware:** `make blobs` downloads NXP's RW61x firmware, covered by the NXP
+  software license in
+  `modules/hal/nxp/zephyr/blobs/license/LA_OPT_NXP_Software_License.txt` in the
+  workspace. The firmware isn't stored in this repo, but the build links it into each
+  Wi-Fi or BLE image, so check that license before distributing images.
+- **J-Link:** the software is covered by SEGGER's license, which you accept when you
+  download it.
+
+## License
+
+The code and documentation in this repo are licensed under the
+[Apache License 2.0](LICENSE). That doesn't cover the third-party firmware and tools above,
+or Zephyr and its modules, which have their own licenses.

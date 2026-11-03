@@ -1,11 +1,11 @@
 /*
  * Runs the Zephyr shell, including the Wi-Fi commands, over NXP's Wireless UART
- * profile, so the IoT Toolbox phone app is the board's console. Besides the shell and
- * logs, it reports the Wi-Fi status regularly and whenever the status changes.
+ * profile, so a BLE client is the board's console. Besides the shell and logs, it
+ * reports the Wi-Fi status regularly and whenever the status changes.
  *
- * Each side of the profile is both a GATT server and client. The phone writes to the
+ * Each side of the profile is both a GATT server and client. The client writes to the
  * stream characteristic on this board, and this board discovers the same service on
- * the phone and writes to its stream characteristic.
+ * the client and writes to its stream characteristic.
  *
  * The link has no pairing or encryption, so any nearby BLE device can use the shell.
  */
@@ -69,7 +69,7 @@ static int discovery_attempts;
 static struct net_mgmt_event_callback wifi_cb;
 static struct net_mgmt_event_callback ipv4_cb;
 
-/* Wakes main() to report the status early, and greet a newly connected phone. */
+/* Wakes main() to report the status early, and greet a newly connected client. */
 static K_SEM_DEFINE(report_sem, 0, 1);
 static atomic_t greet_pending;
 
@@ -97,7 +97,7 @@ static void shell_input(const uint8_t *data, size_t len)
 	}
 }
 
-/* Phone apps may send a line without a terminator, which the shell would wait for. */
+/* Clients may send a line without a terminator, which the shell would wait for. */
 static void line_end(struct k_work *work)
 {
 	if (!input_ends_line) {
@@ -194,7 +194,7 @@ static uint8_t discover_cb(struct bt_conn *conn, const struct bt_gatt_attr *attr
 			   struct bt_gatt_discover_params *params)
 {
 	if (attr == NULL) {
-		/* Discovery ended without a match. The phone may still be adding its service. */
+		/* Discovery ended without a match. The client may still be adding its service. */
 		if (discovery_attempts < DISCOVERY_MAX_ATTEMPTS) {
 			k_work_schedule(&discovery_work, DISCOVERY_RETRY_DELAY);
 		} else {
@@ -222,7 +222,7 @@ static uint8_t discover_cb(struct bt_conn *conn, const struct bt_gatt_attr *attr
 	k_mutex_unlock(&peer_lock);
 	printk("Shell ready over BLE\n");
 
-	/* An empty command makes the shell print its prompt on the phone. */
+	/* An empty command makes the shell print its prompt on the client. */
 	shell_input((const uint8_t *)"\r", 1);
 
 	atomic_set(&greet_pending, 1);
