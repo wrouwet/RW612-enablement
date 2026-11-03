@@ -28,7 +28,7 @@ Only `install-host-deps.sh` needs sudo. Everything else stays inside the workspa
 ## Usage
 
 ```bash
-make build APP=wifi     # APP is blinky (default), wifi, ble or a path to an application
+make build APP=wifi     # APP is ble_shell (default), blinky, wifi_ble, wireless_uart, wifi, ble or a path to an application
 make flash APP=wifi     # add RUNNER=jlink or RUNNER=linkserver to choose the flash tool
 make monitor            # serial console at 115200 baud, PORT=/dev/ttyACM0 by default
 make wifi-test          # flash wifi_ble, join a network, then test ping and TCP
@@ -42,6 +42,7 @@ make clean
 | `blinky` | `apps/blinky` | Blinks the green LED and logs each change to the console |
 | `wifi_ble` | `apps/wifi_ble` | Wi-Fi shell and BLE together. A BLE characteristic reports the Wi-Fi status |
 | `wireless_uart` | `apps/wireless_uart` | Bridges a UART to BLE for the Wireless UART screen of NXP's IoT Toolbox app |
+| `ble_shell` | `apps/ble_shell` | Zephyr console on a phone over BLE, with Wi-Fi commands and logs |
 | `wifi` | Zephyr `samples/net/wifi/shell` | Wi-Fi shell |
 | `ble` | Zephyr `samples/bluetooth/peripheral` | BLE peripheral |
 
@@ -82,6 +83,34 @@ Limitations:
 - **No pairing:** any nearby BLE device can connect and read or write the UART, so
   don't bridge anything sensitive.
 - **One connection:** only one phone can connect at a time.
+
+## Zephyr console on a phone
+
+`apps/ble_shell` is the default application and the board's main console. It runs the
+Zephyr shell and log output over the same Wireless UART profile, with Wi-Fi and BLE in
+one image. It greets you when you connect, reports the Wi-Fi status every 30 seconds,
+and reports changes as they happen.
+
+```bash
+make flash APP=ble_shell
+```
+
+In IoT Toolbox, open Wireless UART, connect to `NXP_WU`, and type commands such as
+`help`, `wifi scan` or `net iface`. To join a network:
+
+```
+wifi connect -s <SSID> -k 1 -p <password>
+```
+
+The board allows one BLE connection at a time, so close the connection on any other
+device first, or they will compete for it and the link will keep dropping.
+
+Use `-k 3` for WPA3 and `-k 0` for an open network. Logs also go to J10, which is the
+only place to see those from before the phone connects.
+
+**Security:** this app has no pairing or encryption, on purpose, for bench use. Any
+nearby BLE device can connect and run shell commands, and Wi-Fi passwords typed on the
+phone cross the air unencrypted. Add pairing before using it outside a test setup.
 
 ## Flashing
 
